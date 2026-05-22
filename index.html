@@ -288,7 +288,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr;
+  $("eyebrow").textContent = dateStr + " · v3";
 
   const listEl = $("list");
 
