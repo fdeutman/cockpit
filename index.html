@@ -79,15 +79,21 @@
   .memo { padding: 32px 22px 24px; flex: 1; display: flex; flex-direction: column; }
   .memo-title { font-size: 26px; font-weight: 600; margin: 4px 0; color: #fff; }
   .memo-sub { font-size: 14px; color: #888; margin: 0 0 24px; }
-  .memo-mic-wrap { display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
-  .mic-btn { width: 120px; height: 120px; border-radius: 50%; background: #3a1414; border: 3px solid #e24b4a; color: #f09595; font-size: 48px; display: flex; align-items: center; justify-content: center; animation: micpulse 1.6s ease-in-out infinite; }
-  .mic-btn.idle { background: #1a1a1a; border-color: #2a2a2a; color: #888; animation: none; }
   @keyframes micpulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(226,75,74,0.4); } 50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(226,75,74,0); } }
-  .timer { font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 16px 0 6px; color: #fff; }
-  .memo-hint { font-size: 13px; color: #888; margin: 0; }
-  .transcript-box { background: #161616; border: 0.5px solid #2a2a2a; border-radius: 16px; padding: 16px; font-size: 15px; line-height: 1.5; color: #e5e5e5; margin: 20px 0 16px; min-height: 100px; max-height: 240px; overflow-y: auto; }
   .transcript-box.empty { color: #555; font-style: italic; }
   .memo-actions { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+  .quick-outcomes { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 16px; }
+  .quick-btn { background: #161616; border: 0.5px solid #2a2a2a; color: #fff; padding: 14px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 12px; text-align: left; }
+  .quick-btn:active { background: #2a2a2a; }
+  .quick-icon { font-size: 22px; flex-shrink: 0; }
+  .quick-text { flex: 1; }
+  .memo-divider { text-align: center; font-size: 12px; color: #555; margin: 4px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .memo-mic-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
+  .mic-btn { width: 80px; height: 80px; border-radius: 50%; background: #3a1414; border: 3px solid #e24b4a; color: #f09595; font-size: 32px; display: flex; align-items: center; justify-content: center; animation: micpulse 1.6s ease-in-out infinite; }
+  .mic-btn.idle { background: #1a1a1a; border-color: #2a2a2a; color: #888; animation: none; }
+  .timer { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 12px 0 4px; color: #fff; }
+  .memo-hint { font-size: 13px; color: #888; margin: 0; }
+  .transcript-box { background: #161616; border: 0.5px solid #2a2a2a; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: #e5e5e5; margin: 12px 0 14px; min-height: 60px; max-height: 160px; overflow-y: auto; }
   .btn-primary { background: #1d9e75; color: #fff; height: 56px; border-radius: 28px; font-size: 16px; font-weight: 600; }
   .btn-primary:active { background: #168561; }
   .btn-secondary { background: #2a2a2a; color: #fff; height: 52px; border-radius: 26px; font-size: 15px; font-weight: 500; }
@@ -133,7 +139,7 @@
   <!-- List screen -->
   <div class="screen" id="screen-list">
     <div class="header">
-      <p class="eyebrow" id="eyebrow">Vandaag · v2</p>
+      <p class="eyebrow" id="eyebrow">Vandaag · v3</p>
       <div class="header-row">
         <h1 class="title">Belrondje</h1>
       </div>
@@ -187,13 +193,30 @@
   <div class="screen hidden" id="screen-memo">
     <div class="memo">
       <p class="eyebrow" id="m-eyebrow">Na gesprek met</p>
-      <h1 class="memo-title" id="m-title">Wat is besproken?</h1>
-      <p class="memo-sub">Spreek vrijuit. Tik op stoppen als je klaar bent.</p>
+      <h1 class="memo-title" id="m-title">Hoe ging het?</h1>
+      <p class="memo-sub">Kies snel een uitkomst, of neem een memo op</p>
+
+      <div class="quick-outcomes">
+        <button class="quick-btn" data-outcome="no-answer">
+          <span class="quick-icon">📵</span>
+          <span class="quick-text">Niet bereikt</span>
+        </button>
+        <button class="quick-btn" data-outcome="brief">
+          <span class="quick-icon">👍</span>
+          <span class="quick-text">Kort gesproken</span>
+        </button>
+        <button class="quick-btn" data-outcome="voicemail">
+          <span class="quick-icon">📨</span>
+          <span class="quick-text">Voicemail ingesproken</span>
+        </button>
+      </div>
+
+      <p class="memo-divider">of neem een memo op</p>
 
       <div class="memo-mic-wrap">
-        <button class="mic-btn" id="mic-btn">●</button>
+        <button class="mic-btn idle" id="mic-btn">●</button>
         <p class="timer" id="m-timer">0:00</p>
-        <p class="memo-hint" id="m-hint">Aan het luisteren…</p>
+        <p class="memo-hint" id="m-hint">Tik op de microfoon</p>
       </div>
 
       <div class="transcript-box empty" id="transcript">Spraak verschijnt hier…</div>
@@ -381,15 +404,37 @@ function closeBriefing() {
 // ============ CALL ============
 function placeCall(contact) {
   closeBriefing();
+  // Mark this contact as "we just called" — when the app becomes active again
+  // we'll show the memo screen. This is more reliable than a setTimeout because
+  // the browser may pause timers when the app goes to background.
+  localStorage.setItem("cockpit_pending_memo", JSON.stringify({
+    contactId: contact.id,
+    calledAt: Date.now()
+  }));
   // Open the native dialer via tel: link
-  // On Android this opens the phone app with the number pre-filled
   window.location.href = "tel:" + contact.phone.replace(/[^\d+]/g, "");
+}
 
-  // After a short delay, show the memo screen
-  // The user will be in the phone app; when they come back, memo screen is ready
-  setTimeout(() => {
-    showMemoScreen(contact);
-  }, 800);
+// Check on app open / when returning from dialer whether a memo is pending
+function checkPendingMemo() {
+  const pending = localStorage.getItem("cockpit_pending_memo");
+  if (!pending) return;
+  try {
+    const { contactId, calledAt } = JSON.parse(pending);
+    // Only honor pending memos from the last 30 minutes — anything older is stale
+    if (Date.now() - calledAt > 30 * 60 * 1000) {
+      localStorage.removeItem("cockpit_pending_memo");
+      return;
+    }
+    const contact = CONTACTS.find(c => c.id === contactId);
+    if (contact) {
+      showMemoScreen(contact);
+    } else {
+      localStorage.removeItem("cockpit_pending_memo");
+    }
+  } catch {
+    localStorage.removeItem("cockpit_pending_memo");
+  }
 }
 
 // ============ MEMO ============
@@ -399,16 +444,48 @@ function showMemoScreen(contact) {
   $("screen-outbox").classList.add("hidden");
   $("screen-memo").classList.remove("hidden");
   $("m-eyebrow").textContent = "Na gesprek met " + contact.name;
-  $("m-title").textContent = "Wat is besproken?";
+  $("m-title").textContent = "Hoe ging het?";
   $("transcript").textContent = "Spraak verschijnt hier…";
   $("transcript").classList.add("empty");
   $("m-timer").textContent = "0:00";
-  $("m-hint").textContent = "Tik op de microfoon om te starten";
+  $("m-hint").textContent = "Tik op de microfoon";
   $("mic-btn").classList.add("idle");
   liveTranscript = "";
+  // Clear the pending memo flag since we're now on the memo screen
+  localStorage.removeItem("cockpit_pending_memo");
+}
 
-  // Auto-start recording after a brief moment
-  setTimeout(startMemo, 500);
+function recordQuickOutcome(outcomeType) {
+  if (!currentContact) return;
+  const labels = {
+    "no-answer": "Niet bereikt — terugbellen",
+    "brief": "Kort gesproken — geen actie",
+    "voicemail": "Voicemail ingesproken"
+  };
+  const text = labels[outcomeType] || outcomeType;
+  state.memos.push({
+    contactId: currentContact.id,
+    contactName: currentContact.name,
+    contactPhone: currentContact.phone,
+    timestamp: new Date().toISOString(),
+    text: text,
+    outcome: outcomeType
+  });
+  if (!state.completed.includes(currentContact.id)) {
+    state.completed.push(currentContact.id);
+  }
+  saveState();
+
+  // Move to next contact, or back to list
+  const next = CONTACTS.find(c => !state.completed.includes(c.id));
+  $("screen-memo").classList.add("hidden");
+  $("screen-list").classList.remove("hidden");
+  renderList();
+  if (next) {
+    showToast(text + ". Volgende: " + next.name);
+  } else {
+    showToast(text + ". Klaar voor vandaag.");
+  }
 }
 
 function startMemo() {
@@ -744,8 +821,23 @@ $("btn-share").onclick = shareMemos;
 $("btn-copy").onclick = copyMemos;
 $("btn-clear").onclick = clearMemos;
 
+// Quick outcome buttons
+document.querySelectorAll(".quick-btn").forEach(btn => {
+  btn.onclick = () => recordQuickOutcome(btn.dataset.outcome);
+});
+
+// When the app becomes visible again (e.g., user returns from dialer),
+// check if there's a pending memo to show
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    checkPendingMemo();
+  }
+});
+
 // Initial render
 renderList();
+// Check on initial load too — in case user navigated away and back via home screen
+checkPendingMemo();
 
 // Preload voices (some browsers need this)
 if (window.speechSynthesis) {
