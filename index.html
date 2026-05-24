@@ -289,7 +289,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v7";
+  $("eyebrow").textContent = dateStr + " · v8";
 
   const listEl = $("list");
 
@@ -431,9 +431,25 @@ function showCallNotification(contact) {
     icon: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%231d9e75"/><path d="M30 35 Q30 30 35 30 L42 30 L48 42 L42 48 Q48 58 60 64 L66 58 L78 64 L78 71 Q78 76 73 76 Q48 76 30 58 Q30 45 30 35 Z" fill="white"/></svg>'),
     tag: "cockpit-call",
     requireInteraction: true,
-    silent: false
+    silent: false,
+    renotify: true
   };
-  // Prefer service worker for reliable notifications when app is in background
+  // Ask the service worker to schedule the notification — it will fire after a short delay
+  // so it appears AFTER the dialer has taken over, not before.
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    try {
+      navigator.serviceWorker.controller.postMessage({
+        type: "schedule-notification",
+        title: title,
+        options: options,
+        delayMs: 2000
+      });
+      return;
+    } catch (e) {
+      console.log("SW postMessage failed:", e);
+    }
+  }
+  // Fallback: try direct registration
   if (swRegistration) {
     try {
       swRegistration.showNotification(title, options);
@@ -441,14 +457,6 @@ function showCallNotification(contact) {
     } catch (e) {
       console.log("SW notification failed:", e);
     }
-  }
-  // Fallback to direct Notification API
-  try {
-    const notif = new Notification(title, options);
-    notif.onclick = () => { window.focus(); notif.close(); };
-    window._callNotification = notif;
-  } catch (e) {
-    console.log("Notification failed:", e);
   }
 }
 
