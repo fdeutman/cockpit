@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>7Gen Connect</title>
+<title>7GenConnect</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231d9e75'/%3E%3Cpath d='M30 35 Q30 30 35 30 L42 30 L48 42 L42 48 Q48 58 60 64 L66 58 L78 64 L78 71 Q78 76 73 76 Q48 76 30 58 Q30 45 30 35 Z' fill='white'/%3E%3C/svg%3E">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -137,24 +137,24 @@
 
   <!-- Top nav -->
   <div class="topnav" id="topnav">
-    <button class="topnav-btn active" data-tab="list">Bellen</button>
+    <button class="topnav-btn active" data-tab="list">Calls</button>
     <button class="topnav-btn" data-tab="outbox">Memos <span class="badge hidden" id="memo-badge">0</span></button>
   </div>
 
   <!-- List screen -->
   <div class="screen" id="screen-list">
     <div class="header">
-      <p class="eyebrow" id="eyebrow">Vandaag · v3</p>
+      <p class="eyebrow" id="eyebrow">Today</p>
       <div class="header-row">
-        <h1 class="title">Belrondje</h1>
+        <h1 class="title">Call run</h1>
       </div>
-      <p class="meta" id="meta">0 van 0 gedaan</p>
+      <p class="meta" id="meta">0 of 0 done</p>
       <div class="progress"><div class="progress-fill" id="progress" style="width: 0%"></div></div>
     </div>
     <div class="list" id="list"></div>
     <div class="bottom-bar">
-      <button class="btn-nav secondary" id="btn-load">Laad lijst</button>
-      <button class="btn-nav primary" id="btn-start">Start volgende</button>
+      <button class="btn-nav secondary" id="btn-load">Load list</button>
+      <button class="btn-nav primary" id="btn-start">Start next</button>
     </div>
     <input type="file" id="file-picker" accept=".json,application/json" style="display: none;">
   </div>
@@ -162,16 +162,16 @@
   <!-- Outbox screen -->
   <div class="screen hidden" id="screen-outbox">
     <div class="outbox">
-      <p class="eyebrow">Vandaag</p>
-      <h1 class="title" style="margin: 2px 0 0;">Memos voor Claude</h1>
-      <p class="meta" id="outbox-meta">Nog geen memos</p>
+      <p class="eyebrow">Today</p>
+      <h1 class="title" style="margin: 2px 0 0;">Memos for Claude</h1>
+      <p class="meta" id="outbox-meta">No memos yet</p>
 
       <div class="outbox-list" id="outbox-list"></div>
 
       <div class="memo-actions">
-        <button class="btn-primary" id="btn-share">Stuur memos naar Claude</button>
-        <button class="btn-secondary" id="btn-copy">Kopieer naar klembord</button>
-        <button class="btn-ghost" id="btn-clear">Wis alle memos</button>
+        <button class="btn-primary" id="btn-share">Send memos to Claude</button>
+        <button class="btn-secondary" id="btn-copy">Copy to clipboard</button>
+        <button class="btn-ghost" id="btn-clear">Clear all memos</button>
       </div>
     </div>
   </div>
@@ -189,47 +189,47 @@
       </div>
       <p class="briefing-text" id="b-text"></p>
       <div class="voice-bars" id="b-bars"></div>
-      <button class="btn-call" id="b-call">Bel nu</button>
-      <button class="btn-skip" id="b-skip">Overslaan</button>
+      <button class="btn-call" id="b-call">Call now</button>
+      <button class="btn-skip" id="b-skip">Skip</button>
     </div>
   </div>
 
   <!-- Memo screen -->
   <div class="screen hidden" id="screen-memo">
     <div class="memo">
-      <p class="eyebrow" id="m-eyebrow">Na gesprek met</p>
-      <h1 class="memo-title" id="m-title">Hoe ging het?</h1>
-      <p class="memo-sub">Kies snel een uitkomst, of neem een memo op</p>
+      <p class="eyebrow" id="m-eyebrow">After call with</p>
+      <h1 class="memo-title" id="m-title">How did it go?</h1>
+      <p class="memo-sub">Pick a quick outcome, or record a memo</p>
 
       <div class="quick-outcomes">
         <button class="quick-btn" data-outcome="no-answer">
           <span class="quick-icon">📵</span>
-          <span class="quick-text">Niet bereikt</span>
+          <span class="quick-text">No answer</span>
         </button>
         <button class="quick-btn" data-outcome="brief">
           <span class="quick-icon">👍</span>
-          <span class="quick-text">Kort gesproken</span>
+          <span class="quick-text">Quick chat</span>
         </button>
         <button class="quick-btn" data-outcome="voicemail">
           <span class="quick-icon">📨</span>
-          <span class="quick-text">Voicemail ingesproken</span>
+          <span class="quick-text">Left voicemail</span>
         </button>
       </div>
 
-      <p class="memo-divider">of neem een memo op</p>
+      <p class="memo-divider">or record a memo</p>
 
       <div class="memo-mic-wrap">
         <button class="mic-btn idle" id="mic-btn">●</button>
         <p class="timer" id="m-timer">0:00</p>
-        <p class="memo-hint" id="m-hint">Tik op de microfoon</p>
+        <p class="memo-hint" id="m-hint">Tap the microphone</p>
       </div>
 
-      <div class="transcript-box empty hidden" id="transcript">Spraak verschijnt hier…</div>
-      <textarea class="memo-type-box hidden" id="memo-typed" placeholder="Typ hier je memo…" rows="3"></textarea>
+      <div class="transcript-box empty hidden" id="transcript">Speech appears here…</div>
+      <textarea class="memo-type-box hidden" id="memo-typed" placeholder="Type your memo…" rows="3"></textarea>
 
       <div class="memo-actions">
-        <button class="btn-primary" id="m-save">Opslaan en volgende</button>
-        <button class="btn-secondary" id="m-back">Terug naar lijst</button>
+        <button class="btn-primary" id="m-save">Save and next</button>
+        <button class="btn-secondary" id="m-back">Back to list</button>
       </div>
     </div>
   </div>
@@ -238,8 +238,8 @@
 
 <script>
 // ============ DATA ============
-// Contactenlijst wordt geladen vanuit een JSON bestand dat jij selecteert.
-// Standaard pad: Internal storage > Download > Cockpit > contacts.json
+// Contact list is loaded from a JSON file you select.
+// Default path: Internal storage > Download > Cockpit > contacts.json
 let CONTACTS = [];
 let LIST_META = { date: "", source: "" };
 
@@ -293,30 +293,30 @@ function renderList() {
   const pending = CONTACTS.filter(c => !state.completed.includes(c.id));
   const nextContact = pending[0];
 
-  const dateStr = new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v10";
+  const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  $("eyebrow").textContent = dateStr + " · v11";
 
   const listEl = $("list");
 
   if (total === 0) {
-    $("meta").textContent = "Nog geen lijst geladen";
+    $("meta").textContent = "No list loaded yet";
     $("progress").style.width = "0%";
     listEl.innerHTML = '<div class="empty-state">'
       + '<div class="empty-icon">📋</div>'
-      + '<p class="empty-title">Geen lijst voor vandaag</p>'
-      + '<p class="empty-text">Vraag Claude om een belrondje te bouwen, download het JSON bestand naar <code>Download/Cockpit/</code>, en tik op "Laad lijst" hieronder.</p>'
-      + '<button class="btn-primary" id="btn-load-big" style="margin-top: 16px; min-width: 200px;">Laad lijst</button>'
+      + '<p class="empty-title">No list for today</p>'
+      + '<p class="empty-text">Ask Claude to build a call list, download the JSON file to <code>Download/Cockpit/</code>, and tap Load list below.</p>'
+      + '<button class="btn-primary" id="btn-load-big" style="margin-top: 16px; min-width: 200px;">Load list</button>'
       + '</div>';
     const bigBtn = $("btn-load-big");
     if (bigBtn) bigBtn.onclick = () => $("file-picker").click();
     $("btn-start").disabled = true;
-    $("btn-start").textContent = "Geen lijst";
+    $("btn-start").textContent = "No list";
     updateMemoBadge();
     return;
   }
 
   const sourceLabel = LIST_META.source ? " · " + LIST_META.source : "";
-  $("meta").textContent = done + " van " + total + " gebeld" + sourceLabel;
+  $("meta").textContent = done + " of " + total + " called" + sourceLabel;
   $("progress").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
 
   listEl.innerHTML = CONTACTS.map(c => {
@@ -324,7 +324,7 @@ function renderList() {
     const isActive = !isDone && c.id === (nextContact && nextContact.id);
     const cardClass = "card" + (isActive ? " active" : "") + (isDone ? " done" : "");
     const tagHtml = isDone
-      ? '<span class="tag done">Gedaan</span>'
+      ? '<span class="tag done">Done</span>'
       : '<span class="tag ' + (c.tag || "warm") + '">' + (c.tagLabel || "Warm") + '</span>';
     const iconHtml = isDone ? '✓' : isActive ? '▶' : '›';
     const iconClass = "status-icon" + (isDone ? " done" : isActive ? " active" : "");
@@ -343,7 +343,6 @@ function renderList() {
   listEl.querySelectorAll(".card").forEach(card => {
     card.onclick = () => {
       const id = parseInt(card.dataset.id);
-      if (state.completed.includes(id)) return;
       const c = CONTACTS.find(x => x.id === id);
       openBriefing(c);
     };
@@ -351,7 +350,7 @@ function renderList() {
 
   // Update start button
   $("btn-start").disabled = !nextContact;
-  $("btn-start").textContent = nextContact ? "Start volgende" : "Klaar voor vandaag";
+  $("btn-start").textContent = nextContact ? "Start next" : "Done for today";
 
   // Update memo badge
   updateMemoBadge();
@@ -430,9 +429,9 @@ async function ensureNotificationPermission() {
 
 function showCallNotification(contact) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const title = "Memo voor " + contact.name;
+  const title = "Memo for " + contact.name;
   const options = {
-    body: "Tik om terug te keren naar Cockpit",
+    body: "Tap to return to 7GenConnect",
     icon: "icon-192.png",
     tag: "cockpit-call",
     requireInteraction: true,
@@ -526,12 +525,12 @@ function showMemoScreen(contact) {
   $("screen-list").classList.add("hidden");
   $("screen-outbox").classList.add("hidden");
   $("screen-memo").classList.remove("hidden");
-  $("m-eyebrow").textContent = "Na gesprek met " + contact.name;
-  $("m-title").textContent = "Hoe ging het?";
-  $("transcript").textContent = "Spraak verschijnt hier…";
+  $("m-eyebrow").textContent = "After call with " + contact.name;
+  $("m-title").textContent = "How did it go?";
+  $("transcript").textContent = "Speech appears here…";
   $("transcript").classList.add("empty");
   $("m-timer").textContent = "0:00";
-  $("m-hint").textContent = "Tik op de microfoon om memo op te nemen";
+  $("m-hint").textContent = "Tap the microphone to record a memo";
   $("mic-btn").classList.add("idle");
   $("mic-btn").classList.remove("recording");
   $("mic-btn").textContent = "●";
@@ -545,9 +544,9 @@ function showMemoScreen(contact) {
 function recordQuickOutcome(outcomeType) {
   if (!currentContact) return;
   const labels = {
-    "no-answer": "Niet bereikt — terugbellen",
-    "brief": "Kort gesproken — geen actie",
-    "voicemail": "Voicemail ingesproken"
+    "no-answer": "No answer, call back later",
+    "brief": "Quick chat, no action",
+    "voicemail": "Left voicemail"
   };
   const text = labels[outcomeType] || outcomeType;
   state.memos.push({
@@ -569,9 +568,9 @@ function recordQuickOutcome(outcomeType) {
   $("screen-list").classList.remove("hidden");
   renderList();
   if (next) {
-    showToast(text + ". Volgende: " + next.name);
+    showToast(text + ". Next: " + next.name);
   } else {
-    showToast(text + ". Klaar voor vandaag.");
+    showToast(text + ". Done for today.");
   }
 }
 
@@ -581,7 +580,7 @@ function showTypedFallback() {
   $("mic-btn").classList.add("idle");
   $("mic-btn").classList.remove("recording");
   $("mic-btn").textContent = "●";
-  $("m-hint").textContent = "Spraak werkt hier niet — typ je memo";
+  $("m-hint").textContent = "Speech not available here, type your memo";
   $("memo-typed").classList.remove("hidden");
   $("memo-typed").focus();
 }
@@ -590,7 +589,7 @@ function startMemo() {
   $("mic-btn").classList.remove("idle");
   $("mic-btn").classList.add("recording");
   $("mic-btn").textContent = "■";
-  $("m-hint").textContent = "Aan het luisteren… tik om te stoppen";
+  $("m-hint").textContent = "Listening… tap to stop";
   memoStartTime = Date.now();
 
   if (memoTimer) clearInterval(memoTimer);
@@ -675,7 +674,7 @@ function stopMemo() {
   $("mic-btn").classList.add("idle");
   $("mic-btn").classList.remove("recording");
   $("mic-btn").textContent = "●";
-  $("m-hint").textContent = "Opgenomen. Tik Opslaan om door te gaan.";
+  $("m-hint").textContent = "Recorded. Tap Save to continue.";
 }
 
 function getMemoText() {
@@ -686,7 +685,7 @@ function getMemoText() {
   if (typed) return typed;
   if (spoken) return spoken;
   const transcriptShown = $("transcript").textContent.trim();
-  return (transcriptShown && transcriptShown !== "Spraak verschijnt hier…") ? transcriptShown : "";
+  return (transcriptShown && transcriptShown !== "Speech appears here…") ? transcriptShown : "";
 }
 
 function saveMemo() {
@@ -713,10 +712,10 @@ function saveMemo() {
   renderList();
 
   if (next) {
-    showToast("Memo opgeslagen. Volgende: " + next.name);
+    showToast("Memo saved. Next: " + next.name);
     setTimeout(() => openBriefing(next), 1200);
   } else {
-    showToast("Alle calls gedaan voor vandaag");
+    showToast("All calls done for today");
   }
 }
 
@@ -748,8 +747,8 @@ function renderOutbox() {
   const meta = $("outbox-meta");
 
   if (state.memos.length === 0) {
-    meta.textContent = "Nog geen memos opgenomen vandaag";
-    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🎙</div><p class="empty-text">Memos die je na elke call opneemt verschijnen hier. Stuur ze in één keer naar Claude om in HubSpot te zetten.</p></div>';
+    meta.textContent = "No memos recorded today";
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🎙</div><p class="empty-text">Memos you record after each call appear here. Send them to Claude in one go to log them in HubSpot.</p></div>';
     $("btn-share").disabled = true;
     $("btn-copy").disabled = true;
     $("btn-share").style.opacity = "0.4";
@@ -757,14 +756,14 @@ function renderOutbox() {
     return;
   }
 
-  meta.textContent = state.memos.length + " memo" + (state.memos.length > 1 ? "s" : "") + " klaar";
+  meta.textContent = state.memos.length + " memo" + (state.memos.length > 1 ? "s" : "") + " ready";
   $("btn-share").disabled = false;
   $("btn-copy").disabled = false;
   $("btn-share").style.opacity = "1";
   $("btn-copy").style.opacity = "1";
 
   listEl.innerHTML = state.memos.map((m, i) => {
-    const time = new Date(m.timestamp).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+    const time = new Date(m.timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     return '<div class="memo-item">'
       + '<div class="memo-item-head">'
       +   '<span class="memo-item-name">' + m.contactName + '</span>'
@@ -776,13 +775,13 @@ function renderOutbox() {
 }
 
 function buildMemoText() {
-  const dateStr = new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  let out = "Call memos — " + dateStr + "\n\n";
-  out += "Hoi Claude, hieronder de memos van mijn belrondje vandaag. Zet de relevante info in HubSpot per contact, op de bestaande conventies (E.164, domain matching, eigenaar routing).\n\n";
+  const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  let out = "Call memos, " + dateStr + "\n\n";
+  out += "Hi Claude, below are the memos from my call run today. Please log the relevant info in HubSpot per contact, following the usual conventions (E.164, domain matching, owner routing).\n\n";
   state.memos.forEach((m, i) => {
-    const time = new Date(m.timestamp).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+    const time = new Date(m.timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     out += "---\n";
-    out += (i + 1) + ". " + m.contactName + " (" + m.contactPhone + ") — " + time + "\n";
+    out += (i + 1) + ". " + m.contactName + " (" + m.contactPhone + "), " + time + "\n";
     out += m.text + "\n\n";
   });
   return out;
@@ -791,12 +790,12 @@ function buildMemoText() {
 function promptClearAfterSend() {
   // Wait a moment for the user to actually paste the memos in chat
   setTimeout(() => {
-    if (confirm("Memos verstuurd. Nu wissen uit de app?\n\nKies OK als ze in de Claude chat staan. Anders Annuleren om ze nog te bewaren.")) {
+    if (confirm("Memos sent. Clear them from the app?\n\nChoose OK if they are in the Claude chat. Otherwise Cancel to keep them.")) {
       state.memos = [];
       saveState();
       renderOutbox();
       updateMemoBadge();
-      showToast("Memos gewist");
+      showToast("Memos cleared");
     }
   }, 500);
 }
@@ -822,7 +821,7 @@ async function copyMemos() {
   const text = buildMemoText();
   try {
     await navigator.clipboard.writeText(text);
-    showToast("Memos gekopieerd. Plak in Claude chat.");
+    showToast("Memos copied. Paste into Claude chat.");
     promptClearAfterSend();
   } catch (e) {
     // Fallback: select textarea
@@ -832,13 +831,13 @@ async function copyMemos() {
     ta.select();
     document.execCommand("copy");
     document.body.removeChild(ta);
-    showToast("Memos gekopieerd. Plak in Claude chat.");
+    showToast("Memos copied. Paste into Claude chat.");
     promptClearAfterSend();
   }
 }
 
 function clearMemos() {
-  if (confirm("Alle memos wissen? Dit kan niet ongedaan worden gemaakt.")) {
+  if (confirm("Clear all memos? This cannot be undone.")) {
     state.memos = [];
     saveState();
     renderOutbox();
@@ -899,20 +898,20 @@ $("file-picker").onchange = (e) => {
         if (data.date) meta.date = data.date;
         if (data.source) meta.source = data.source;
       } else {
-        throw new Error("Onbekend formaat. Verwacht een lijst van contacten of een object met contacts: [...].");
+        throw new Error("Unknown format. Expected a list of contacts or an object with contacts: [...].");
       }
 
       // Validate and normalize each contact
       const normalized = newContacts.map((c, i) => ({
         id: c.id || (i + 1),
-        name: c.name || "Onbekend",
+        name: c.name || "Unknown",
         role: c.role || "",
         phone: c.phone || "",
         initials: c.initials || (c.name || "?").split(" ").map(w => w[0]).slice(0, 2).join(""),
         avatar: c.avatar || ["c1","c2","c3","c4","c5","c6"][i % 6],
         tag: c.tag || "warm",
         tagLabel: c.tagLabel || "Warm",
-        briefing: c.briefing || "Bellen met " + (c.name || "contact") + "."
+        briefing: c.briefing || "Call " + (c.name || "contact") + "."
       }));
 
       CONTACTS = normalized;
@@ -924,9 +923,9 @@ $("file-picker").onchange = (e) => {
       state.completed = [];
       saveState();
       renderList();
-      showToast("Lijst geladen: " + normalized.length + " contacten");
+      showToast("List loaded: " + normalized.length + " contacts");
     } catch (err) {
-      alert("Kon het bestand niet lezen.\n\n" + err.message);
+      alert("Could not read the file.\n\n" + err.message);
     }
     // Reset the picker so the same file can be re-selected later
     e.target.value = "";

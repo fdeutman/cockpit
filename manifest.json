@@ -1,7 +1,7 @@
 {
-  "name": "7Gen Connect",
-  "short_name": "7Gen Connect",
-  "description": "Dagelijks belrondje met AI briefings en memos",
+  "name": "7GenConnect",
+  "short_name": "7GenConnect",
+  "description": "Daily call run with AI briefings and memos",
   "start_url": "/cockpit/",
   "scope": "/cockpit/",
   "display": "standalone",
