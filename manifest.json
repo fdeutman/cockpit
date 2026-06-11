@@ -1,6 +1,6 @@
 {
-  "name": "Call Cockpit",
-  "short_name": "Cockpit",
+  "name": "7Gen Connect",
+  "short_name": "7Gen Connect",
   "description": "Dagelijks belrondje met AI briefings en memos",
   "start_url": "/cockpit/",
   "scope": "/cockpit/",
