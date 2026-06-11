@@ -7,6 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Call Cockpit</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231d9e75'/%3E%3Cpath d='M30 35 Q30 30 35 30 L42 30 L48 42 L42 48 Q48 58 60 64 L66 58 L78 64 L78 71 Q78 76 73 76 Q48 76 30 58 Q30 45 30 35 Z' fill='white'/%3E%3C/svg%3E">
 <style>
@@ -81,6 +83,8 @@
   .memo-sub { font-size: 14px; color: #888; margin: 0 0 24px; }
   @keyframes micpulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(226,75,74,0.4); } 50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(226,75,74,0); } }
   .transcript-box.empty { color: #555; font-style: italic; }
+  .memo-type-box { background: #161616; border: 0.5px solid #2a2a2a; border-radius: 12px; padding: 12px 14px; font-size: 16px; line-height: 1.5; color: #fff; margin: 12px 0 14px; width: 100%; box-sizing: border-box; font-family: inherit; resize: vertical; }
+  .memo-type-box:focus { outline: none; border-color: #1d9e75; }
   .memo-actions { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
   .quick-outcomes { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 16px; }
   .quick-btn { background: #161616; border: 0.5px solid #2a2a2a; color: #fff; padding: 14px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 12px; text-align: left; }
@@ -221,6 +225,7 @@
       </div>
 
       <div class="transcript-box empty hidden" id="transcript">Spraak verschijnt hier…</div>
+      <textarea class="memo-type-box hidden" id="memo-typed" placeholder="Typ hier je memo…" rows="3"></textarea>
 
       <div class="memo-actions">
         <button class="btn-primary" id="m-save">Opslaan en volgende</button>
@@ -289,7 +294,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v8";
+  $("eyebrow").textContent = dateStr + " · v9";
 
   const listEl = $("list");
 
@@ -530,6 +535,8 @@ function showMemoScreen(contact) {
   $("mic-btn").classList.add("idle");
   $("mic-btn").classList.remove("recording");
   $("mic-btn").textContent = "●";
+  $("memo-typed").value = "";
+  $("memo-typed").classList.add("hidden");
   liveTranscript = "";
   // Clear the pending memo flag since we're now on the memo screen
   localStorage.removeItem("cockpit_pending_memo");
@@ -568,6 +575,17 @@ function recordQuickOutcome(outcomeType) {
   }
 }
 
+function showTypedFallback() {
+  // Stop the recording visual — speech isn't going to work here
+  if (memoTimer) { clearInterval(memoTimer); memoTimer = null; }
+  $("mic-btn").classList.add("idle");
+  $("mic-btn").classList.remove("recording");
+  $("mic-btn").textContent = "●";
+  $("m-hint").textContent = "Spraak werkt hier niet — typ je memo";
+  $("memo-typed").classList.remove("hidden");
+  $("memo-typed").focus();
+}
+
 function startMemo() {
   $("mic-btn").classList.remove("idle");
   $("mic-btn").classList.add("recording");
@@ -586,8 +604,7 @@ function startMemo() {
   // Use Web Speech API for live transcription
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    $("transcript").textContent = "Spraakherkenning niet beschikbaar in deze browser. Tik op opslaan en typ later.";
-    $("transcript").classList.remove("empty");
+    showTypedFallback();
     return;
   }
 
@@ -622,6 +639,11 @@ function startMemo() {
     console.log("Recognition error:", e.error);
     if (e.error === "no-speech") {
       try { recognition.start(); } catch {}
+    } else if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture" || e.error === "language-not-supported") {
+      // Speech recognition blocked or unsupported (common on iOS Safari) — switch to typing
+      try { recognition.stop(); } catch {}
+      recognition = null;
+      showTypedFallback();
     }
   };
 
@@ -656,10 +678,21 @@ function stopMemo() {
   $("m-hint").textContent = "Opgenomen. Tik Opslaan om door te gaan.";
 }
 
+function getMemoText() {
+  const typed = $("memo-typed").value.trim();
+  const spoken = liveTranscript.trim();
+  // Typed text wins if present; combine if both exist somehow
+  if (typed && spoken) return spoken + " " + typed;
+  if (typed) return typed;
+  if (spoken) return spoken;
+  const transcriptShown = $("transcript").textContent.trim();
+  return (transcriptShown && transcriptShown !== "Spraak verschijnt hier…") ? transcriptShown : "";
+}
+
 function saveMemo() {
   stopMemo();
-  const text = liveTranscript.trim() || $("transcript").textContent.trim();
-  if (text && text !== "Spraak verschijnt hier…") {
+  const text = getMemoText();
+  if (text) {
     state.memos.push({
       contactId: currentContact.id,
       contactName: currentContact.name,
@@ -693,7 +726,7 @@ function backToList() {
     state.completed.push(currentContact.id);
   }
   // Still save the memo if there is one
-  const text = liveTranscript.trim();
+  const text = getMemoText();
   if (text) {
     state.memos.push({
       contactId: currentContact.id,
