@@ -219,6 +219,9 @@
       <p class="note">The AI returns text in JSON format. Copy it, paste it above, and tap Save new list. The list opens on the Calls tab.</p>
     </div>
   </div>
+
+  <!-- Briefing overlay -->
+  <div class="overlay hidden" id="overlay-briefing">
     <div class="briefing">
       <p class="briefing-eyebrow"><span class="dot"></span> Briefing</p>
       <div class="briefing-avatar-row">
@@ -335,7 +338,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v14";
+  $("eyebrow").textContent = dateStr + " · v15";
 
   const listEl = $("list");
 
