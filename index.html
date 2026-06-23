@@ -128,6 +128,20 @@
   .badge { display: inline-block; background: #D2406D; color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 10px; margin-left: 6px; font-weight: 600; }
 
   /* Toast */
+  .build { padding: 24px 22px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+  .build-sub { font-size: 13px; color: #888; margin: 10px 0 18px; line-height: 1.5; }
+  .build-input { width: 100%; min-height: 110px; background: #161616; border: 0.5px solid #2a2a2a; border-radius: 14px; padding: 14px; color: #fff; font-size: 16px; font-family: inherit; resize: vertical; box-sizing: border-box; }
+  .build-input:focus { outline: none; border-color: #009AA2; }
+  .build-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 8px; font-weight: 500; }
+  .ai-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .build-divider { text-align: center; font-size: 12px; color: #555; margin: 22px 0 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .build-input-wrap { position: relative; }
+  .build-mic { position: absolute; right: 10px; bottom: 10px; width: 44px; height: 44px; border-radius: 50%; background: #009AA2; border: none; color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .build-mic.recording { background: #D2406D; animation: micpulse 1.6s ease-in-out infinite; }
+  .ai-btn { background: #161616; border: 0.5px solid #2a2a2a; color: #ccc; padding: 10px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; }
+  .ai-btn.active { background: #009AA2; color: #fff; border-color: #009AA2; }
+  .status { font-size: 13px; color: #66C7CC; margin: 12px 0 0; text-align: center; min-height: 18px; }
+  .note { font-size: 12px; color: #666; margin-top: 18px; line-height: 1.5; }
   .toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #009AA2; color: #fff; padding: 12px 20px; border-radius: 22px; font-size: 14px; font-weight: 500; z-index: 100; animation: toastIn 0.3s; }
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 </style>
@@ -138,6 +152,7 @@
   <!-- Top nav -->
   <div class="topnav" id="topnav">
     <button class="topnav-btn active" data-tab="list">Calls</button>
+    <button class="topnav-btn" data-tab="build">New list</button>
     <button class="topnav-btn" data-tab="outbox">Memos <span class="badge hidden" id="memo-badge">0</span></button>
   </div>
 
@@ -176,8 +191,34 @@
     </div>
   </div>
 
-  <!-- Briefing overlay -->
-  <div class="overlay hidden" id="overlay-briefing">
+  <!-- Build list screen -->
+  <div class="screen hidden" id="screen-build">
+    <div class="build">
+      <p class="eyebrow">7GenConnect</p>
+      <h1 class="title" style="margin: 2px 0 0;">New list</h1>
+      <p class="build-sub">Leave the box empty to let your AI build a list from what it knows about you. Or add instructions, names, or pasted contacts to steer it. Then send it to your AI tool.</p>
+
+      <div class="build-input-wrap">
+        <textarea class="build-input" id="build-input" placeholder="Optional: extra instructions, names, or pasted contacts. Tap the mic to speak."></textarea>
+        <button class="build-mic idle" id="build-mic" aria-label="Speak">&#127908;</button>
+      </div>
+
+      <div class="memo-actions" style="margin-top: 14px;">
+        <button class="btn-primary" id="btn-build-share">Ask AI to build list</button>
+      </div>
+
+      <p class="build-divider">then paste the AI's answer below</p>
+
+      <textarea class="build-input" id="build-paste" placeholder="Paste the JSON the AI gave you here…"></textarea>
+
+      <div class="memo-actions" style="margin-top: 14px;">
+        <button class="btn-primary" id="btn-build-save">Save new list</button>
+      </div>
+      <p class="status" id="build-status"></p>
+
+      <p class="note">The AI returns text in JSON format. Copy it, paste it above, and tap Save new list. The list opens on the Calls tab.</p>
+    </div>
+  </div>
     <div class="briefing">
       <p class="briefing-eyebrow"><span class="dot"></span> Briefing</p>
       <div class="briefing-avatar-row">
@@ -294,7 +335,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v11";
+  $("eyebrow").textContent = dateStr + " · v14";
 
   const listEl = $("list");
 
@@ -464,14 +505,40 @@ function showCallNotification(contact) {
   }
 }
 
-function clearCallNotification() {
-  // Clear via service worker
+function scheduleReturnNotification(title, body) {
+  if (!("Notification" in window)) return;
+  // Request permission if not yet decided
+  if (Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+  if (Notification.permission !== "granted") return;
+  const options = {
+    body: body,
+    icon: "icon-192.png",
+    tag: "cockpit-return",
+    requireInteraction: true,
+    silent: false,
+    renotify: true
+  };
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    try {
+      navigator.serviceWorker.controller.postMessage({
+        type: "schedule-notification", title: title, options: options, delayMs: 2000
+      });
+      return;
+    } catch (e) { console.log("SW postMessage failed:", e); }
+  }
   if (swRegistration) {
-    swRegistration.getNotifications({ tag: "cockpit-call" }).then((notifs) => {
-      notifs.forEach((n) => n.close());
+    try { swRegistration.showNotification(title, options); } catch (e) { console.log(e); }
+  }
+}
+
+function clearCallNotification() {
+  if (swRegistration) {
+    swRegistration.getNotifications().then((notifs) => {
+      notifs.forEach((n) => { if (n.tag === "cockpit-call" || n.tag === "cockpit-return") n.close(); });
     }).catch(() => {});
   }
-  // Also clear direct notification if any
   if (window._callNotification) {
     try { window._callNotification.close(); } catch {}
     window._callNotification = null;
@@ -861,7 +928,9 @@ function showTab(tab) {
   document.querySelectorAll(".topnav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   $("screen-list").classList.toggle("hidden", tab !== "list");
   $("screen-outbox").classList.toggle("hidden", tab !== "outbox");
+  $("screen-build").classList.toggle("hidden", tab !== "build");
   $("screen-memo").classList.add("hidden");
+  if (tab === "build") { $("build-status").textContent = ""; $("build-status").className = "status"; }
   if (tab === "outbox") renderOutbox();
   if (tab === "list") renderList();
 }
@@ -877,6 +946,167 @@ $("btn-start").onclick = () => {
 };
 
 $("btn-load").onclick = () => $("file-picker").click();
+
+// ============ BUILD LIST (prompt via share + paste back) ============
+function buildPrompt() {
+  const userInput = $("build-input").value.trim();
+  const today = new Date().toISOString().split("T")[0];
+  const inputBlock = userInput
+    ? `Extra instructions from me (use these to steer the list):\n${userInput}`
+    : `No extra instructions this time. Build a sensible call list based on what you know about me and my work, using any sources you have available (such as HubSpot or Outlook if connected).`;
+  return `I use a calling app called 7GenConnect. Build me a call list as a JSON file in the exact schema below. Output ONLY the JSON, no extra text, no markdown fences.
+
+${inputBlock}
+
+If you have access to my CRM (HubSpot) or email (Outlook), use them to find the right people and their real phone numbers. Otherwise work from the instructions above.
+
+Rules:
+- Phone numbers must be E.164 format: no spaces, no leading (0). Example: +31612345678. A Dutch mobile written as 06 12345678 becomes +31612345678.
+- If a contact has no phone number, set "phone" to "" and note it in "role".
+- Write a short briefing per contact (max 30 words) with who they are and the goal of the call. Match my language (Dutch or English).
+- "avatar" rotates through c1, c2, c3, c4, c5, c6.
+- "tag" is one of: hot, warm, cold, followup. "tagLabel" is a short display label.
+- "id" counts up from 1. "initials" are 1-3 letters from the name.
+- "date" is ${today}. "source" is a short label for the list.
+
+Schema:
+{
+  "date": "${today}",
+  "source": "short label",
+  "contacts": [
+    {
+      "id": 1,
+      "name": "Full Name",
+      "role": "company or context",
+      "phone": "+31612345678",
+      "initials": "FN",
+      "avatar": "c1",
+      "tag": "warm",
+      "tagLabel": "Follow-up",
+      "briefing": "Short who and why, max 30 words."
+    }
+  ]
+}`;
+}
+
+$("btn-build-share").onclick = async () => {
+  const text = buildPrompt();
+  // Schedule a "return to app" notification, same mechanism as calling
+  scheduleReturnNotification("Building your list", "Tap to return to 7GenConnect");
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "7GenConnect prompt", text: text });
+      $("build-status").textContent = "Prompt sent. Paste the AI's answer below when ready.";
+    } catch (e) {
+      if (e.name !== "AbortError") fallbackCopyPrompt(text);
+    }
+  } else {
+    fallbackCopyPrompt(text);
+  }
+};
+
+async function fallbackCopyPrompt(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch {}
+    document.body.removeChild(ta);
+  }
+  $("build-status").textContent = "Prompt copied. Paste it into your AI tool.";
+}
+
+$("btn-build-save").onclick = () => {
+  const raw = $("build-paste").value.trim();
+  if (!raw) { $("build-status").textContent = "Paste the AI's JSON answer first."; return; }
+  try {
+    // Strip markdown fences if present, extract the JSON object
+    let cleaned = raw.replace(/```json|```/g, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("No JSON object found in the pasted text.");
+    const data = JSON.parse(cleaned.slice(start, end + 1));
+
+    let newContacts = Array.isArray(data) ? data : data.contacts;
+    if (!Array.isArray(newContacts) || !newContacts.length) throw new Error("No contacts in the JSON.");
+
+    const normalized = newContacts.map((c, i) => ({
+      id: c.id || (i + 1),
+      name: c.name || "Unknown",
+      role: c.role || "",
+      phone: c.phone || "",
+      initials: c.initials || (c.name || "?").split(" ").map(w => w[0]).slice(0, 2).join(""),
+      avatar: c.avatar || ["c1","c2","c3","c4","c5","c6"][i % 6],
+      tag: c.tag || "warm",
+      tagLabel: c.tagLabel || "Warm",
+      briefing: c.briefing || "Call " + (c.name || "contact") + "."
+    }));
+
+    CONTACTS = normalized;
+    LIST_META = { date: (data.date || ""), source: (data.source || "New list") };
+    state.contacts = normalized;
+    state.listDate = LIST_META.date;
+    state.listSource = LIST_META.source;
+    state.completed = [];
+    saveState();
+
+    // Clear the paste box and jump to Calls
+    $("build-paste").value = "";
+    $("build-input").value = "";
+    $("build-status").textContent = "";
+    showTab("list");
+    showToast("New list saved: " + normalized.length + " contacts");
+  } catch (err) {
+    $("build-status").textContent = "Could not read that JSON: " + err.message;
+    $("build-status").className = "status error";
+  }
+};
+
+// Build input dictation
+let buildRecognition = null;
+$("build-mic").onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $("build-status").textContent = "Speech not available, please type."; return; }
+  if (buildRecognition) {
+    // Currently recording -> stop
+    try { buildRecognition.stop(); } catch {}
+    buildRecognition = null;
+    $("build-mic").classList.remove("recording");
+    $("build-mic").classList.add("idle");
+    return;
+  }
+  buildRecognition = new SR();
+  buildRecognition.lang = "nl-NL";
+  buildRecognition.continuous = true;
+  buildRecognition.interimResults = true;
+  const baseText = $("build-input").value ? $("build-input").value + " " : "";
+  let sessionFinal = "";
+  buildRecognition.onresult = (e) => {
+    let interim = "", newFinal = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) newFinal += e.results[i][0].transcript + " ";
+      else interim += e.results[i][0].transcript;
+    }
+    if (newFinal) sessionFinal += newFinal;
+    $("build-input").value = baseText + sessionFinal + interim;
+  };
+  buildRecognition.onerror = (ev) => {
+    if (ev.error === "no-speech") { try { buildRecognition.start(); } catch {} }
+    else { buildRecognition = null; $("build-mic").classList.remove("recording"); $("build-mic").classList.add("idle"); }
+  };
+  buildRecognition.onend = () => {
+    if (buildRecognition && $("build-mic").classList.contains("recording")) {
+      try { buildRecognition.start(); } catch {}
+    }
+  };
+  try {
+    buildRecognition.start();
+    $("build-mic").classList.add("recording");
+    $("build-mic").classList.remove("idle");
+    $("build-status").textContent = "Listening… tap the mic again to stop.";
+  } catch (e) { buildRecognition = null; }
+};
 
 $("file-picker").onchange = (e) => {
   const file = e.target.files[0];
@@ -970,6 +1200,12 @@ document.querySelectorAll(".quick-btn").forEach(btn => {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     checkPendingMemo();
+    // Clear the "return to app" notification from the build flow
+    if (swRegistration) {
+      swRegistration.getNotifications().then((notifs) => {
+        notifs.forEach((n) => { if (n.tag === "cockpit-return") n.close(); });
+      }).catch(() => {});
+    }
   }
 });
 
