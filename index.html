@@ -338,7 +338,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v15";
+  $("eyebrow").textContent = dateStr + " · v16";
 
   const listEl = $("list");
 
@@ -955,22 +955,31 @@ function buildPrompt() {
   const userInput = $("build-input").value.trim();
   const today = new Date().toISOString().split("T")[0];
   const inputBlock = userInput
-    ? `Extra instructions from me (use these to steer the list):\n${userInput}`
-    : `No extra instructions this time. Build a sensible call list based on what you know about me and my work, using any sources you have available (such as HubSpot or Outlook if connected).`;
+    ? `My instructions for this list:\n${userInput}`
+    : `No specific instructions this time. Build a useful call list from the reliable sources you have access to.`;
   return `I use a calling app called 7GenConnect. Build me a call list as a JSON file in the exact schema below. Output ONLY the JSON, no extra text, no markdown fences.
 
 ${inputBlock}
 
-If you have access to my CRM (HubSpot) or email (Outlook), use them to find the right people and their real phone numbers. Otherwise work from the instructions above.
+How to build the list:
+- First, recall what you already know about me, my work, and my preferences for call lists, from your memory and our past conversations. Follow the conventions and preferences we have established before. If you have no such memory, just follow the rules below.
+- Use the reliable sources you have access to (such as a connected CRM, email, or calendar) to find the right people and their real phone numbers. If you have no connected sources, work only from the names and details I give you above.
+- NEVER invent or guess anything. Do not make up phone numbers, names, roles, or reasons to call. If you are not sure, leave it out or leave it blank.
+- Only include GOOD contacts: people there is a real, defensible reason to call right now. Quality over quantity. A short trustworthy list is the goal.
+- Maximum 8 contacts. Take FEWER if there are not enough strong candidates. Do not pad the list to reach 8.
 
-Rules:
+Writing the briefing for each contact:
+- Only state what you actually found in a source. If you found context (last contact, open action, deal stage), use it.
+- If you did NOT find a clear reason or status, write a neutral factual briefing like "Naam bij Bedrijf. Geen recente context gevonden." Do not invent a goal for the call.
+- Keep it under 30 words. Match my language (Dutch or English).
+
+Other rules:
 - Phone numbers must be E.164 format: no spaces, no leading (0). Example: +31612345678. A Dutch mobile written as 06 12345678 becomes +31612345678.
-- If a contact has no phone number, set "phone" to "" and note it in "role".
-- Write a short briefing per contact (max 30 words) with who they are and the goal of the call. Match my language (Dutch or English).
+- If a contact has no reliable phone number, set "phone" to "" and note "geen nummer" in "role". Never guess a number.
 - "avatar" rotates through c1, c2, c3, c4, c5, c6.
 - "tag" is one of: hot, warm, cold, followup. "tagLabel" is a short display label.
 - "id" counts up from 1. "initials" are 1-3 letters from the name.
-- "date" is ${today}. "source" is a short label for the list.
+- "date" is ${today}. "source" is a short label describing the list.
 
 Schema:
 {
