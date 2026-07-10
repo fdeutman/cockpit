@@ -347,7 +347,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v19";
+  $("eyebrow").textContent = dateStr + " · v20";
 
   const listEl = $("list");
 
@@ -959,9 +959,9 @@ $("btn-start").onclick = () => {
 
 $("btn-file").onclick = () => $("file-picker").click();
 
-// Opens the shared cockpit artifact on claude.ai. One link for all users;
-// each user signs in with their own Claude account and HubSpot connection.
-const ARTIFACT_URL = "https://claude.ai/artifacts/d6d34161-fef5-4e4a-9154-b8d97c8a8c93";
+// Opens the shared cockpit artifact on claude.ai. Shared within the SevenGen
+// Claude organization; each user signs in once with their own account.
+const ARTIFACT_URL = "https://claude.ai/artifacts/latest/f2fa88ac-f8af-4ec6-9d70-c6af296440b8";
 $("btn-cockpit").onclick = () => { window.location.href = ARTIFACT_URL; };
 
 // ============ BUILD LIST (prompt via share + paste back) ============
