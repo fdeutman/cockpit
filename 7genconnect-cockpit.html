@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7GenConnect Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pine:#123B2F;
+    --moss:#3E6B54;
+    --sage:#ECF1EA;
+    --card:#FFFFFF;
+    --ink:#22302A;
+    --mute:#6B7A72;
+    --line:#D9E2D8;
+    --hot:#B4552D;
+    --warm:#C98A1B;
+    --cold:#5B7B9A;
+    --followup:#3E6B54;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--sage)}
+  body{
+    font-family:'Archivo',system-ui,sans-serif;
+    color:var(--ink);
+    max-width:520px;
+    margin:0 auto;
+    padding:0 14px 90px;
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:var(--sage);
+    padding:16px 2px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .brand h1{font-size:19px;font-weight:800;letter-spacing:-0.02em;color:var(--pine)}
+  .brand h1 span{color:var(--moss);font-weight:600}
+  .brand .headerdate{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute)}
+  .toolbar{display:flex;gap:8px;margin-top:12px}
+  button{
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;
+    border:none;border-radius:10px;cursor:pointer;
+    padding:12px 16px;
+    transition:transform .06s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.55;cursor:default}
+  .btn-primary{background:var(--pine);color:#fff;flex:1}
+  .btn-ghost{background:transparent;color:var(--pine);border:1.5px solid var(--pine)}
+  .status{margin-top:10px;font-size:13px;color:var(--mute);min-height:18px}
+  .status.err{color:var(--hot)}
+  .instructionfield{
+    width:100%;margin-top:12px;
+    font-family:'Archivo',sans-serif;font-size:14px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;
+    background:#FBFCFA;
+  }
+  .instructionfield:focus{outline:2px solid var(--moss);border-color:var(--moss)}
+  .instructionfield::placeholder{color:var(--mute)}
+
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    border-left:5px solid var(--moss);
+    padding:14px 14px 12px;
+    margin-top:14px;
+    box-shadow:0 1px 3px rgba(18,59,47,.07);
+  }
+  .card.tag-hot{border-left-color:var(--hot)}
+  .card.tag-warm{border-left-color:var(--warm)}
+  .card.tag-cold{border-left-color:var(--cold)}
+  .card.tag-followup{border-left-color:var(--followup)}
+  .card.logged{opacity:.62}
+
+  .row{display:flex;align-items:center;gap:11px}
+  .disc{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;color:#fff;flex-shrink:0;
+    background:var(--pine);
+  }
+  .disc.c2{background:#2F5D49}.disc.c3{background:#4A6E3B}
+  .disc.c4{background:#6B5B2E}.disc.c5{background:#3E5A6B}.disc.c6{background:#5A4A6B}
+  .who{min-width:0;flex:1}
+  .who .name{font-weight:700;font-size:16px;letter-spacing:-0.01em}
+  .who .role{font-size:12.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    padding:4px 8px;border-radius:99px;color:#fff;flex-shrink:0;
+  }
+  .chip.hot{background:var(--hot)}.chip.warm{background:var(--warm)}
+  .chip.cold{background:var(--cold)}.chip.followup{background:var(--followup)}
+
+  .briefing{font-size:13.5px;line-height:1.45;color:var(--ink);margin:10px 0 11px}
+
+  .callrow{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--sage);border-radius:11px;padding:11px 13px;
+    text-decoration:none;color:var(--pine);
+  }
+  .callrow .nr{font-family:'IBM Plex Mono',monospace;font-size:14.5px;font-weight:500}
+  .callrow .action{font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px}
+  .callrow.empty{color:var(--mute);pointer-events:none}
+
+  .memo{margin-top:11px}
+  .memo textarea{
+    width:100%;min-height:58px;resize:vertical;
+    font-family:'Archivo',sans-serif;font-size:14px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;
+    background:#FBFCFA;
+  }
+  .memo textarea:focus{outline:2px solid var(--moss);border-color:var(--moss)}
+  .memo .below{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .btn-log{background:var(--moss);color:#fff;font-size:13px;padding:10px 14px}
+  .logstatus{font-size:12.5px;color:var(--mute)}
+  .logstatus.ok{color:var(--followup);font-weight:700}
+  .logstatus.err{color:var(--hot)}
+
+  .emptystate{text-align:center;padding:56px 20px;color:var(--mute);line-height:1.5}
+  .emptystate .big{font-size:17px;font-weight:700;color:var(--pine);margin-bottom:6px}
+
+  .spinner{
+    display:inline-block;width:14px;height:14px;border-radius:50%;
+    border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;
+    animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){.spinner{animation-duration:1.6s}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>7Gen<span>Connect</span></h1>
+    <div class="headerdate" id="headerdate"></div>
+  </div>
+  <input type="text" id="instruction" class="instructionfield"
+    placeholder="Instruction for the list (optional), e.g. only LPs in the Nordics">
+  <div class="toolbar">
+    <button class="btn-primary" id="btnRefresh">Refresh call list</button>
+    <button class="btn-ghost" id="btnExport" title="Copy list as JSON">JSON</button>
+  </div>
+  <div class="status" id="status"></div>
+</header>
+
+<main id="list"></main>
+
+<script>
+const STORAGE_KEY = 'cockpit-state-v1';
+const HUBSPOT_MCP = { type: 'url', url: 'https://mcp.hubspot.com/anthropic', name: 'hubspot' };
+
+let state = { date: null, contacts: [] };
+
+const el = id => document.getElementById(id);
+
+function today(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function setStatus(txt, isError){
+  const s = el('status');
+  s.textContent = txt || '';
+  s.className = 'status' + (isError ? ' err' : '');
+}
+
+async function loadState(){
+  try{
+    const r = await window.storage.get(STORAGE_KEY);
+    if(r && r.value){ state = JSON.parse(r.value); }
+  }catch(e){ /* no saved state yet, that is fine */ }
+  if(state.instruction){ el('instruction').value = state.instruction; }
+  render();
+}
+
+async function saveState(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ console.error('Saving failed', e); }
+}
+
+function initialsOf(name){
+  return name.split(/\s+/).filter(Boolean).slice(0,3).map(w=>w[0]).join('').toUpperCase().slice(0,3);
+}
+
+function render(){
+  el('headerdate').textContent = state.date || today();
+  const list = el('list');
+  list.innerHTML = '';
+
+  if(!state.contacts.length){
+    list.innerHTML = '<div class="emptystate"><div class="big">No call list yet</div>First connect your own HubSpot to Claude (Settings, Connectors). Then tap Refresh call list and Claude builds a list from your CRM. Your data stays yours and is not visible to anyone else.</div>';
+    return;
+  }
+
+  state.contacts.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'card tag-' + (c.tag||'warm') + (c.logged ? ' logged' : '');
+
+    const callContent = c.phone
+      ? '<a class="callrow" href="tel:' + c.phone + '"><span class="nr">' + c.phone + '</span><span class="action">&#9742; Call</span></a>'
+      : '<div class="callrow empty"><span class="nr">no number</span></div>';
+
+    card.innerHTML =
+      '<div class="row">' +
+        '<div class="disc ' + (c.avatar||'c1') + '">' + (c.initials || initialsOf(c.name)) + '</div>' +
+        '<div class="who"><div class="name">' + c.name + '</div><div class="role">' + (c.role||'') + '</div></div>' +
+        '<span class="chip ' + (c.tag||'warm') + '">' + (c.tagLabel || c.tag || '') + '</span>' +
+      '</div>' +
+      '<div class="briefing">' + (c.briefing||'') + '</div>' +
+      callContent +
+      '<div class="memo">' +
+        '<textarea placeholder="Memo after the call" data-i="' + i + '">' + (c.memo||'') + '</textarea>' +
+        '<div class="below">' +
+          '<button class="btn-log" data-i="' + i + '"' + (c.logged?' disabled':'') + '>' + (c.logged?'Logged':'Log to HubSpot') + '</button>' +
+          '<span class="logstatus' + (c.logged?' ok':'') + '" id="logstatus-' + i + '">' + (c.logged?'Saved on the contact record':'') + '</span>' +
+        '</div>' +
+      '</div>';
+
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('textarea').forEach(t => {
+    t.addEventListener('input', e => {
+      state.contacts[+e.target.dataset.i].memo = e.target.value;
+    });
+    t.addEventListener('blur', saveState);
+  });
+  list.querySelectorAll('.btn-log').forEach(b => {
+    b.addEventListener('click', () => logCall(+b.dataset.i, b));
+  });
+}
+
+async function askClaude(prompt, withHubspot){
+  const body = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1000,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if(withHubspot){ body.mcp_servers = [HUBSPOT_MCP]; }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await resp.json();
+  if(data.error){ throw new Error(data.error.message || 'API error'); }
+  return data.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('\n');
+}
+
+async function refreshList(){
+  const btn = el('btnRefresh');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Searching HubSpot';
+  setStatus('Claude is building your call list. This takes about half a minute.');
+
+  let prompt =
+'You are building a call list for the user based on their own HubSpot CRM. You do not know this CRM in advance, so explore it through the HubSpot tools. Approach: ' +
+'1) Find deals with recent activity (notes_last_updated or notes_last_contacted within the last 3 weeks), across all pipelines. Exclude deals in stages whose label indicates lost, rejected or no interest (such as closed lost, rejected, no interest). ' +
+'2) Fetch the associated contacts with their phone number (phone or mobilephone), job title and company. ' +
+'RULES: NEVER invent names, numbers or context. Only include contacts with a real phone number from HubSpot, otherwise leave phone empty. Numbers in E.164 without spaces, derive the country code from the number itself (a Dutch 06 number becomes +316...). Maximum 6 contacts, fewer is better than padding. Only contacts with a defensible reason to call right now. ' +
+'Briefing per contact: maximum 22 words, facts from HubSpot only (deal stage, last contact date, job title). Write the briefing in English, unless the CRM data is clearly in another language, then match that language. Do not use dashes as punctuation. If there is no clear reason: neutral briefing such as Name at Company, no recent context found. ' +
+'If you have no HubSpot tools available, reply with exactly: NO_HUBSPOT. ' +
+'OTHERWISE REPLY WITH ONLY a JSON array, no surrounding text, no markdown. Each element: ' +
+'{"hubspotId":"contact id as string","name":"","role":"company or context","phone":"+31...or empty","tag":"hot|warm|cold|followup","tagLabel":"short label","briefing":""}';
+
+  const userInstruction = el('instruction').value.trim();
+  if(userInstruction){
+    prompt += ' EXTRA INSTRUCTION FROM THE USER, prioritize this in the selection: "' +
+      userInstruction.replace(/"/g,"'") +
+      '". The base rules still apply: never invent data, only real numbers from HubSpot.';
+    state.instruction = userInstruction;
+  }
+
+  try{
+    const text = await askClaude(prompt, true);
+    if(text.includes('NO_HUBSPOT')){
+      throw new Error('No HubSpot connection found. Connect HubSpot to your Claude account via Settings, Connectors, then try again.');
+    }
+    const clean = text.replace(/```json|```/g,'').trim();
+    const start = clean.indexOf('[');
+    const end = clean.lastIndexOf(']');
+    if(start === -1 || end === -1){ throw new Error('No valid list received. Please try again.'); }
+    const arr = JSON.parse(clean.slice(start, end+1));
+
+    state = {
+      date: today(),
+      instruction: userInstruction,
+      contacts: arr.map((c, i) => ({
+        hubspotId: c.hubspotId || '',
+        name: c.name || '',
+        role: c.role || '',
+        phone: (c.phone||'').replace(/[\s()]/g,''),
+        initials: initialsOf(c.name||''),
+        avatar: 'c' + ((i % 6) + 1),
+        tag: ['hot','warm','cold','followup'].includes(c.tag) ? c.tag : 'warm',
+        tagLabel: c.tagLabel || c.tag || '',
+        briefing: c.briefing || '',
+        memo: '',
+        logged: false
+      }))
+    };
+    await saveState();
+    render();
+    setStatus(state.contacts.length + ' contacts loaded.');
+  }catch(e){
+    console.error(e);
+    setStatus('Failed: ' + e.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Refresh call list';
+  }
+}
+
+async function logCall(i, btn){
+  const c = state.contacts[i];
+  const memo = (c.memo||'').trim();
+  const statusEl = el('logstatus-' + i);
+  if(!memo){
+    statusEl.textContent = 'Write a memo first';
+    statusEl.className = 'logstatus err';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Logging';
+  statusEl.textContent = '';
+  statusEl.className = 'logstatus';
+
+  const prompt =
+'Use the HubSpot tools to log a note. ' +
+'Create a note associated with the contact with id ' + c.hubspotId + ' (' + c.name + '). ' +
+'Note body: "Phone call ' + today() + ' (via 7GenConnect): ' + memo.replace(/"/g,"'") + '". ' +
+'The user has explicitly approved this, use confirmationStatus CONFIRMED where required. ' +
+'Reply with only DONE if it succeeded, or ERROR: followed by the reason.';
+
+  try{
+    const text = await askClaude(prompt, true);
+    if(text.includes('DONE')){
+      c.logged = true;
+      await saveState();
+      render();
+    }else{
+      throw new Error(text.replace('ERROR:','').trim() || 'Unknown error');
+    }
+  }catch(e){
+    console.error(e);
+    btn.disabled = false;
+    btn.textContent = 'Log to HubSpot';
+    statusEl.textContent = 'Failed: ' + e.message;
+    statusEl.className = 'logstatus err';
+  }
+}
+
+function exportJson(){
+  const out = {
+    date: state.date || today(),
+    source: 'Cockpit export',
+    contacts: state.contacts.map((c, i) => ({
+      id: i+1, name: c.name, role: c.role, phone: c.phone,
+      initials: c.initials, avatar: c.avatar, tag: c.tag,
+      tagLabel: c.tagLabel, briefing: c.briefing
+    }))
+  };
+  const text = JSON.stringify(out, null, 2);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(()=>setStatus('JSON copied to clipboard.'))
+      .catch(()=>setStatus('Copying blocked. Open the console for the JSON.', true));
+  }
+  console.log(text);
+}
+
+el('btnRefresh').addEventListener('click', refreshList);
+el('btnExport').addEventListener('click', exportJson);
+loadState();
+</script>
+</body>
+</html>
