@@ -168,8 +168,6 @@
     </div>
     <div class="list" id="list"></div>
     <div class="bottom-bar">
-      <button class="btn-nav secondary" id="btn-load">Load list</button>
-      <button class="btn-nav secondary" id="btn-paste">Paste list</button>
       <button class="btn-nav primary" id="btn-start">Start next</button>
     </div>
     <input type="file" id="file-picker" accept=".json,application/json" style="display: none;">
@@ -197,6 +195,16 @@
     <div class="build">
       <p class="eyebrow">7GenConnect</p>
       <h1 class="title" style="margin: 2px 0 0;">New list</h1>
+      <p class="build-sub">Open the cockpit, tap Refresh call list and JSON, come back here and tap Import from clipboard.</p>
+
+      <div class="memo-actions" style="margin-top: 14px;">
+        <button class="btn-primary" id="btn-cockpit">Open cockpit</button>
+        <button class="btn-secondary" id="btn-build-clip">Import from clipboard</button>
+        <button class="btn-ghost" id="btn-file">Load from file</button>
+      </div>
+
+      <p class="build-divider">or build with a prompt</p>
+
       <p class="build-sub">Leave the box empty to let your AI build a list from what it knows about you. Or add instructions, names, or pasted contacts to steer it. Then send it to your AI tool.</p>
 
       <div class="build-input-wrap">
@@ -209,10 +217,6 @@
       </div>
 
       <p class="build-divider">then paste the AI's answer below</p>
-
-      <div class="memo-actions" style="margin-top: 0;">
-        <button class="btn-secondary" id="btn-build-clip">Import from clipboard</button>
-      </div>
 
       <textarea class="build-input" id="build-paste" placeholder="Paste the JSON the AI gave you here…"></textarea>
 
@@ -343,7 +347,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v17";
+  $("eyebrow").textContent = dateStr + " · v18";
 
   const listEl = $("list");
 
@@ -353,11 +357,11 @@ function renderList() {
     listEl.innerHTML = '<div class="empty-state">'
       + '<div class="empty-icon">📋</div>'
       + '<p class="empty-title">No list for today</p>'
-      + '<p class="empty-text">Ask Claude to build a call list. Copy the JSON and tap Paste list, or download it to <code>Download/Cockpit/</code> and tap Load list.</p>'
-      + '<button class="btn-primary" id="btn-load-big" style="margin-top: 16px; min-width: 200px;">Load list</button>'
+      + '<p class="empty-text">Build or import your call list on the New list tab.</p>'
+      + '<button class="btn-primary" id="btn-newlist-big" style="margin-top: 16px; min-width: 200px;">New list</button>'
       + '</div>';
-    const bigBtn = $("btn-load-big");
-    if (bigBtn) bigBtn.onclick = () => $("file-picker").click();
+    const bigBtn = $("btn-newlist-big");
+    if (bigBtn) bigBtn.onclick = () => showTab("build");
     $("btn-start").disabled = true;
     $("btn-start").textContent = "No list";
     updateMemoBadge();
@@ -953,7 +957,20 @@ $("btn-start").onclick = () => {
   if (next) openBriefing(next);
 };
 
-$("btn-load").onclick = () => $("file-picker").click();
+$("btn-file").onclick = () => $("file-picker").click();
+
+// Open the cockpit artifact. The link is asked once and remembered on this device.
+const ARTIFACT_URL_KEY = "cockpit_artifact_url";
+$("btn-cockpit").onclick = () => {
+  let url = (localStorage.getItem(ARTIFACT_URL_KEY) || "").trim();
+  if (!url) {
+    url = (prompt("Paste the link of your published cockpit artifact (claude.ai/public/artifacts/...). It will be remembered on this device.") || "").trim();
+    if (!url) return;
+    if (!/^https:\/\//i.test(url)) { showToast("That does not look like a link. It should start with https://"); return; }
+    localStorage.setItem(ARTIFACT_URL_KEY, url);
+  }
+  window.location.href = url;
+};
 
 // ============ BUILD LIST (prompt via share + paste back) ============
 function buildPrompt() {
@@ -1096,7 +1113,6 @@ async function importFromClipboard(statusEl) {
   }
 }
 
-$("btn-paste").onclick = () => importFromClipboard(null);
 $("btn-build-clip").onclick = () => importFromClipboard($("build-status"));
 
 $("btn-build-save").onclick = () => {
