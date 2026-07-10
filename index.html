@@ -195,10 +195,10 @@
     <div class="build">
       <p class="eyebrow">7GenConnect</p>
       <h1 class="title" style="margin: 2px 0 0;">New list</h1>
-      <p class="build-sub">Open the cockpit, tap Refresh call list and JSON, come back here and tap Import from clipboard.</p>
+      <p class="build-sub">Use Claude to generate the list, tap Refresh call list and JSON there, come back here and tap Import from clipboard.</p>
 
       <div class="memo-actions" style="margin-top: 14px;">
-        <button class="btn-primary" id="btn-cockpit">Open cockpit</button>
+        <button class="btn-primary" id="btn-cockpit">Use Claude to generate list</button>
         <button class="btn-secondary" id="btn-build-clip">Import from clipboard</button>
         <button class="btn-ghost" id="btn-file">Load from file</button>
       </div>
@@ -347,7 +347,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v18";
+  $("eyebrow").textContent = dateStr + " · v19";
 
   const listEl = $("list");
 
@@ -959,18 +959,10 @@ $("btn-start").onclick = () => {
 
 $("btn-file").onclick = () => $("file-picker").click();
 
-// Open the cockpit artifact. The link is asked once and remembered on this device.
-const ARTIFACT_URL_KEY = "cockpit_artifact_url";
-$("btn-cockpit").onclick = () => {
-  let url = (localStorage.getItem(ARTIFACT_URL_KEY) || "").trim();
-  if (!url) {
-    url = (prompt("Paste the link of your published cockpit artifact (claude.ai/public/artifacts/...). It will be remembered on this device.") || "").trim();
-    if (!url) return;
-    if (!/^https:\/\//i.test(url)) { showToast("That does not look like a link. It should start with https://"); return; }
-    localStorage.setItem(ARTIFACT_URL_KEY, url);
-  }
-  window.location.href = url;
-};
+// Opens the shared cockpit artifact on claude.ai. One link for all users;
+// each user signs in with their own Claude account and HubSpot connection.
+const ARTIFACT_URL = "https://claude.ai/artifacts/d6d34161-fef5-4e4a-9154-b8d97c8a8c93";
+$("btn-cockpit").onclick = () => { window.location.href = ARTIFACT_URL; };
 
 // ============ BUILD LIST (prompt via share + paste back) ============
 function buildPrompt() {
