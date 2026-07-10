@@ -169,6 +169,7 @@
     <div class="list" id="list"></div>
     <div class="bottom-bar">
       <button class="btn-nav secondary" id="btn-load">Load list</button>
+      <button class="btn-nav secondary" id="btn-paste">Paste list</button>
       <button class="btn-nav primary" id="btn-start">Start next</button>
     </div>
     <input type="file" id="file-picker" accept=".json,application/json" style="display: none;">
@@ -208,6 +209,10 @@
       </div>
 
       <p class="build-divider">then paste the AI's answer below</p>
+
+      <div class="memo-actions" style="margin-top: 0;">
+        <button class="btn-secondary" id="btn-build-clip">Import from clipboard</button>
+      </div>
 
       <textarea class="build-input" id="build-paste" placeholder="Paste the JSON the AI gave you here…"></textarea>
 
@@ -338,7 +343,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v16";
+  $("eyebrow").textContent = dateStr + " · v17";
 
   const listEl = $("list");
 
@@ -348,7 +353,7 @@ function renderList() {
     listEl.innerHTML = '<div class="empty-state">'
       + '<div class="empty-icon">📋</div>'
       + '<p class="empty-title">No list for today</p>'
-      + '<p class="empty-text">Ask Claude to build a call list, download the JSON file to <code>Download/Cockpit/</code>, and tap Load list below.</p>'
+      + '<p class="empty-text">Ask Claude to build a call list. Copy the JSON and tap Paste list, or download it to <code>Download/Cockpit/</code> and tap Load list.</p>'
       + '<button class="btn-primary" id="btn-load-big" style="margin-top: 16px; min-width: 200px;">Load list</button>'
       + '</div>';
     const bigBtn = $("btn-load-big");
@@ -1029,46 +1034,84 @@ async function fallbackCopyPrompt(text) {
   $("build-status").textContent = "Prompt copied. Paste it into your AI tool.";
 }
 
+function importListFromText(raw, fallbackSource) {
+  // Strip markdown fences if present, accept a wrapped object or a bare array
+  let cleaned = raw.replace(/```json|```/g, "").trim();
+  const objStart = cleaned.indexOf("{");
+  const arrStart = cleaned.indexOf("[");
+  if (objStart === -1 && arrStart === -1) throw new Error("No JSON found in the text.");
+  let data;
+  if (arrStart !== -1 && (objStart === -1 || arrStart < objStart)) {
+    const end = cleaned.lastIndexOf("]");
+    if (end === -1) throw new Error("No JSON found in the text.");
+    data = JSON.parse(cleaned.slice(arrStart, end + 1));
+  } else {
+    const end = cleaned.lastIndexOf("}");
+    if (end === -1) throw new Error("No JSON found in the text.");
+    data = JSON.parse(cleaned.slice(objStart, end + 1));
+  }
+
+  let newContacts = Array.isArray(data) ? data : data.contacts;
+  if (!Array.isArray(newContacts) || !newContacts.length) throw new Error("No contacts in the JSON.");
+
+  const normalized = newContacts.map((c, i) => ({
+    id: c.id || (i + 1),
+    name: c.name || "Unknown",
+    role: c.role || "",
+    phone: c.phone || "",
+    initials: c.initials || (c.name || "?").split(" ").map(w => w[0]).slice(0, 2).join(""),
+    avatar: c.avatar || ["c1","c2","c3","c4","c5","c6"][i % 6],
+    tag: c.tag || "warm",
+    tagLabel: c.tagLabel || "Warm",
+    briefing: c.briefing || "Call " + (c.name || "contact") + "."
+  }));
+
+  CONTACTS = normalized;
+  LIST_META = { date: (data.date || ""), source: (data.source || fallbackSource || "New list") };
+  state.contacts = normalized;
+  state.listDate = LIST_META.date;
+  state.listSource = LIST_META.source;
+  state.completed = [];
+  saveState();
+  return normalized.length;
+}
+
+async function importFromClipboard(statusEl) {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      throw new Error("Clipboard reading is not available in this browser. Use the paste box on the Build tab.");
+    }
+    const raw = ((await navigator.clipboard.readText()) || "").trim();
+    if (!raw) throw new Error("Clipboard is empty. Copy the JSON first.");
+    const count = importListFromText(raw, "Clipboard import");
+    $("build-paste").value = "";
+    $("build-input").value = "";
+    if (statusEl) { statusEl.textContent = ""; statusEl.className = "status"; }
+    showTab("list");
+    showToast("New list saved: " + count + " contacts");
+  } catch (err) {
+    const msg = "Clipboard import failed: " + err.message;
+    if (statusEl) { statusEl.textContent = msg; statusEl.className = "status error"; }
+    else showToast(msg);
+  }
+}
+
+$("btn-paste").onclick = () => importFromClipboard(null);
+$("btn-build-clip").onclick = () => importFromClipboard($("build-status"));
+
 $("btn-build-save").onclick = () => {
   const raw = $("build-paste").value.trim();
   if (!raw) { $("build-status").textContent = "Paste the AI's JSON answer first."; return; }
   try {
-    // Strip markdown fences if present, extract the JSON object
-    let cleaned = raw.replace(/```json|```/g, "").trim();
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error("No JSON object found in the pasted text.");
-    const data = JSON.parse(cleaned.slice(start, end + 1));
-
-    let newContacts = Array.isArray(data) ? data : data.contacts;
-    if (!Array.isArray(newContacts) || !newContacts.length) throw new Error("No contacts in the JSON.");
-
-    const normalized = newContacts.map((c, i) => ({
-      id: c.id || (i + 1),
-      name: c.name || "Unknown",
-      role: c.role || "",
-      phone: c.phone || "",
-      initials: c.initials || (c.name || "?").split(" ").map(w => w[0]).slice(0, 2).join(""),
-      avatar: c.avatar || ["c1","c2","c3","c4","c5","c6"][i % 6],
-      tag: c.tag || "warm",
-      tagLabel: c.tagLabel || "Warm",
-      briefing: c.briefing || "Call " + (c.name || "contact") + "."
-    }));
-
-    CONTACTS = normalized;
-    LIST_META = { date: (data.date || ""), source: (data.source || "New list") };
-    state.contacts = normalized;
-    state.listDate = LIST_META.date;
-    state.listSource = LIST_META.source;
-    state.completed = [];
-    saveState();
+    const count = importListFromText(raw, "New list");
 
     // Clear the paste box and jump to Calls
     $("build-paste").value = "";
     $("build-input").value = "";
     $("build-status").textContent = "";
+    $("build-status").className = "status";
     showTab("list");
-    showToast("New list saved: " + normalized.length + " contacts");
+    showToast("New list saved: " + count + " contacts");
   } catch (err) {
     $("build-status").textContent = "Could not read that JSON: " + err.message;
     $("build-status").className = "status error";
