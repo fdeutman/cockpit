@@ -347,7 +347,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v20";
+  $("eyebrow").textContent = dateStr + " · v21";
 
   const listEl = $("list");
 
@@ -1106,6 +1106,26 @@ async function importFromClipboard(statusEl) {
 }
 
 $("btn-build-clip").onclick = () => importFromClipboard($("build-status"));
+
+// Arriving from the cockpit with ?paste=1: try to import the clipboard automatically
+(function autoPasteOnArrival(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("paste") !== "1") return;
+  history.replaceState(null, "", window.location.pathname);
+  (async () => {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error("no clipboard");
+      const raw = ((await navigator.clipboard.readText()) || "").trim();
+      if (!raw) throw new Error("empty");
+      const count = importListFromText(raw, "Cockpit import");
+      showTab("list");
+      showToast("New list imported: " + count + " contacts");
+    } catch (e) {
+      showTab("build");
+      showToast("List is on your clipboard. Tap Import from clipboard.");
+    }
+  })();
+})();
 
 $("btn-build-save").onclick = () => {
   const raw = $("build-paste").value.trim();
