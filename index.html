@@ -144,10 +144,27 @@
   .note { font-size: 12px; color: #666; margin-top: 18px; line-height: 1.5; }
   .toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #009AA2; color: #fff; padding: 12px 20px; border-radius: 22px; font-size: 14px; font-weight: 500; z-index: 100; animation: toastIn 0.3s; }
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  .arrival { position: fixed; inset: 0; background: rgba(18,59,47,0.55); backdrop-filter: blur(2px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .arrival.hidden { display: none; }
+  .arrival-card { background: #fff; border-radius: 18px; padding: 28px 22px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+  .arrival-icon { font-size: 40px; margin-bottom: 10px; }
+  .arrival-title { font-size: 18px; font-weight: 700; color: #123B2F; margin: 0 0 6px; }
+  .arrival-text { font-size: 14px; color: #6B7A72; margin: 0 0 18px; line-height: 1.4; }
 </style>
 </head>
 <body>
 <div class="app">
+
+  <!-- Arrival overlay: shown when you arrive from the cockpit via Send -->
+  <div id="arrival" class="arrival hidden">
+    <div class="arrival-card">
+      <div class="arrival-icon">&#128233;</div>
+      <p class="arrival-title">List ready from your desktop</p>
+      <p class="arrival-text">Tap below to load it into your call run.</p>
+      <button class="btn-primary" id="btn-arrival-load" style="width:100%;">Load the list</button>
+      <button class="btn-ghost" id="btn-arrival-cancel" style="width:100%;margin-top:8px;">Not now</button>
+    </div>
+  </div>
 
   <!-- Top nav -->
   <div class="topnav" id="topnav">
@@ -347,7 +364,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v22";
+  $("eyebrow").textContent = dateStr + " · v23";
 
   const listEl = $("list");
 
@@ -1112,24 +1129,31 @@ async function importFromClipboard(statusEl) {
 
 $("btn-build-clip").onclick = () => importFromClipboard($("build-status"));
 
-// Arriving from the cockpit with ?paste=1: try to import the clipboard automatically
-(function autoPasteOnArrival(){
+// Arriving from the cockpit with ?paste=1: show a one-tap loader.
+// Reading the clipboard needs a real tap (browsers block it on page load),
+// so we ask for that single tap instead of failing silently.
+(function arrivalFromCockpit(){
   const params = new URLSearchParams(window.location.search);
   if (params.get("paste") !== "1") return;
   history.replaceState(null, "", window.location.pathname);
-  (async () => {
+  const overlay = $("arrival");
+  overlay.classList.remove("hidden");
+  $("btn-arrival-load").onclick = async () => {
     try {
       if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error("no clipboard");
       const raw = ((await navigator.clipboard.readText()) || "").trim();
       if (!raw) throw new Error("empty");
       const count = importListFromText(raw, "Cockpit import");
+      overlay.classList.add("hidden");
       showTab("list");
-      showToast("New list imported: " + count + " contacts");
+      showToast("List loaded: " + count + " contacts");
     } catch (e) {
+      overlay.classList.add("hidden");
       showTab("build");
-      showToast("List is on your clipboard. Tap Import from clipboard.");
+      showToast("Could not read the clipboard. Tap Import from clipboard.");
     }
-  })();
+  };
+  $("btn-arrival-cancel").onclick = () => { overlay.classList.add("hidden"); };
 })();
 
 $("btn-build-save").onclick = () => {
