@@ -347,7 +347,7 @@ function renderList() {
   const nextContact = pending[0];
 
   const dateStr = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  $("eyebrow").textContent = dateStr + " · v21";
+  $("eyebrow").textContent = dateStr + " · v22";
 
   const listEl = $("list");
 
@@ -357,11 +357,11 @@ function renderList() {
     listEl.innerHTML = '<div class="empty-state">'
       + '<div class="empty-icon">📋</div>'
       + '<p class="empty-title">No list for today</p>'
-      + '<p class="empty-text">Build or import your call list on the New list tab.</p>'
+      + '<p class="empty-text">Tap New list to build one with Claude, then send it back here.</p>'
       + '<button class="btn-primary" id="btn-newlist-big" style="margin-top: 16px; min-width: 200px;">New list</button>'
       + '</div>';
     const bigBtn = $("btn-newlist-big");
-    if (bigBtn) bigBtn.onclick = () => showTab("build");
+    if (bigBtn) bigBtn.onclick = () => { window.location.href = ARTIFACT_URL; };
     $("btn-start").disabled = true;
     $("btn-start").textContent = "No list";
     updateMemoBadge();
@@ -949,7 +949,12 @@ function showTab(tab) {
 
 // ============ EVENT WIRING ============
 document.querySelectorAll(".topnav-btn").forEach(btn => {
-  btn.onclick = () => showTab(btn.dataset.tab);
+  if (btn.dataset.tab === "build") {
+    // New list goes straight to Claude, no in-between menu.
+    btn.onclick = () => { window.location.href = ARTIFACT_URL; };
+  } else {
+    btn.onclick = () => showTab(btn.dataset.tab);
+  }
 });
 
 $("btn-start").onclick = () => {
