@@ -1000,9 +1000,10 @@ $("btn-start").onclick = () => {
 
 $("btn-file").onclick = () => $("file-picker").click();
 
-// Opens the shared cockpit artifact on claude.ai. Shared within the SevenGen
-// Claude organization; each user signs in once with their own account.
-const ARTIFACT_URL = "https://claude.ai/artifacts/latest/d6134416-8322-449f-9196-c15ceb22b128";
+// Opens the published cockpit artifact on claude.ai. Direct published link
+// (not the /latest/ owner alias), which opens reliably on mobile too.
+// Each user signs in once with their own SevenGen account.
+const ARTIFACT_URL = "https://claude.ai/artifacts/bc292eb8-6d77-48db-bb18-75c21437b698";
 $("btn-cockpit").onclick = () => { window.location.href = ARTIFACT_URL; };
 
 // ============ BUILD LIST (prompt via share + paste back) ============
