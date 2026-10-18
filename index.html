@@ -188,7 +188,7 @@
   <!-- Top nav -->
   <div class="topnav" id="topnav">
     <button class="topnav-btn active" data-tab="list">Calls</button>
-    <button class="topnav-btn" data-tab="build">New list</button>
+    <button class="topnav-btn" data-tab="build">Latest list</button>
     <button class="topnav-btn" data-tab="outbox">Memos <span class="badge hidden" id="memo-badge">0</span></button>
   </div>
 
@@ -230,15 +230,17 @@
   <div class="screen hidden" id="screen-build">
     <div class="build">
       <p class="eyebrow">7GenConnect</p>
-      <h1 class="title" style="margin: 2px 0 0;">New list</h1>
-      <p class="build-sub">Use Claude to generate the list, tap Refresh call list and JSON there, come back here and tap Import from clipboard.</p>
+      <h1 class="title" style="margin: 2px 0 0;">Latest list</h1>
+      <p class="build-sub">Open your latest list, tap Send to 7GenConnect there, and it loads here. If it does not, tap Import from clipboard.</p>
 
       <div class="memo-actions" style="margin-top: 14px;">
-        <button class="btn-primary" id="btn-cockpit">Use Claude to generate list</button>
+        <button class="btn-primary" id="btn-cockpit">Open latest list</button>
         <button class="btn-secondary" id="btn-build-clip">Import from clipboard</button>
-        <button class="btn-ghost" id="btn-file">Load from file</button>
+        <button class="btn-ghost" id="btn-file" style="display:none">Load from file</button>
       </div>
 
+      <!-- Building lists on the phone is retired. Kept hidden so existing handlers stay valid. -->
+      <div hidden>
       <p class="build-divider">or build with a prompt</p>
 
       <p class="build-sub">Leave the box empty to let your AI build a list from what it knows about you. Or add instructions, names, or pasted contacts to steer it. Then send it to your AI tool.</p>
@@ -258,6 +260,7 @@
 
       <div class="memo-actions" style="margin-top: 14px;">
         <button class="btn-primary" id="btn-build-save">Save new list</button>
+      </div>
       </div>
       <p class="status" id="build-status"></p>
 
@@ -393,8 +396,8 @@ function renderList() {
     listEl.innerHTML = '<div class="empty-state">'
       + '<div class="empty-icon">📋</div>'
       + '<p class="empty-title">No list for today</p>'
-      + '<p class="empty-text">Tap New list to build one with Claude, then send it back here.</p>'
-      + '<button class="btn-primary" id="btn-newlist-big" style="margin-top: 16px; min-width: 200px;">New list</button>'
+      + '<p class="empty-text">Tap Latest list to open your newest list and send it here.</p>'
+      + '<button class="btn-primary" id="btn-newlist-big" style="margin-top: 16px; min-width: 200px;">Latest list</button>'
       + '</div>';
     const bigBtn = $("btn-newlist-big");
     if (bigBtn) bigBtn.onclick = () => { window.location.href = ARTIFACT_URL; };
@@ -986,7 +989,7 @@ function showTab(tab) {
 // ============ EVENT WIRING ============
 document.querySelectorAll(".topnav-btn").forEach(btn => {
   if (btn.dataset.tab === "build") {
-    // New list goes straight to Claude, no in-between menu.
+    // Latest list goes straight to the loader, no in-between menu.
     btn.onclick = () => { window.location.href = ARTIFACT_URL; };
   } else {
     btn.onclick = () => showTab(btn.dataset.tab);
@@ -1000,10 +1003,10 @@ $("btn-start").onclick = () => {
 
 $("btn-file").onclick = () => $("file-picker").click();
 
-// Opens the published cockpit artifact on claude.ai. Direct published link
-// (not the /latest/ owner alias), which opens reliably on mobile too.
-// Each user signs in once with their own SevenGen account.
-const ARTIFACT_URL = "https://claude.ai/artifacts/bc292eb8-6d77-48db-bb18-75c21437b698";
+// Opens the 7GenConnect Loader on claude.ai: it only holds the latest list
+// and hands it to this app. Building lists happens elsewhere (desktop or chat).
+// Direct published link, which opens reliably on mobile.
+const ARTIFACT_URL = "https://claude.ai/artifact/SM2RaH1uLEkaudjicqL2VP";
 $("btn-cockpit").onclick = () => { window.location.href = ARTIFACT_URL; };
 
 // ============ BUILD LIST (prompt via share + paste back) ============
@@ -1118,7 +1121,7 @@ function importListFromText(raw, fallbackSource) {
   }));
 
   CONTACTS = normalized;
-  LIST_META = { date: (data.date || ""), source: (data.source || fallbackSource || "New list") };
+  LIST_META = { date: (data.date || ""), source: (data.source || fallbackSource || "Latest list") };
   state.contacts = normalized;
   state.listDate = LIST_META.date;
   state.listSource = LIST_META.source;
@@ -1139,7 +1142,7 @@ async function importFromClipboard(statusEl) {
     $("build-input").value = "";
     if (statusEl) { statusEl.textContent = ""; statusEl.className = "status"; }
     showTab("list");
-    showToast("New list saved: " + count + " contacts");
+    showToast("List loaded: " + count + " contacts");
   } catch (err) {
     const msg = "Clipboard import failed: " + err.message;
     if (statusEl) { statusEl.textContent = msg; statusEl.className = "status error"; }
