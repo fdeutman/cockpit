@@ -375,6 +375,7 @@ let recognition = null;
 let memoStartTime = 0;
 let memoTimer = null;
 let liveTranscript = "";
+let liveInterim = "";      // words heard but not yet confirmed (often the last word)
 
 // ============ SPEECH HELPERS ============
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
@@ -676,6 +677,7 @@ function showMemoScreen(contact) {
   $("memo-typed").value = "";
   $("memo-typed").classList.add("hidden");
   liveTranscript = "";
+  liveInterim = "";
   // Clear the pending memo flag since we're now on the memo screen
   localStorage.removeItem("cockpit_pending_memo");
 }
@@ -759,6 +761,7 @@ function startMemo() {
     const r = speechFromResults(e.results);
     sessionFinalText = r.final;
     liveTranscript = joinSpeech(committedText, sessionFinalText);
+    liveInterim = r.interim;
     const display = joinSpeech(liveTranscript, r.interim);
     if (display.trim()) {
       $("transcript").textContent = display;
@@ -780,8 +783,10 @@ function startMemo() {
 
   recognition.onend = () => {
     // Keep what this session heard before a possible restart
-    committedText = joinSpeech(committedText, sessionFinalText);
+    // Android can end a session before confirming the last words: keep them anyway
+    committedText = joinSpeech(joinSpeech(committedText, sessionFinalText), liveInterim);
     sessionFinalText = "";
+    liveInterim = "";
     liveTranscript = committedText;
     // Restart if still recording
     if ($("mic-btn") && !$("mic-btn").classList.contains("idle")) {
@@ -813,7 +818,7 @@ function stopMemo() {
 
 function getMemoText() {
   const typed = $("memo-typed").value.trim();
-  const spoken = liveTranscript.trim();
+  const spoken = joinSpeech(liveTranscript, liveInterim);
   // Typed text wins if present; combine if both exist somehow
   if (typed && spoken) return spoken + " " + typed;
   if (typed) return typed;
@@ -822,8 +827,25 @@ function getMemoText() {
   return (transcriptShown && transcriptShown !== "Speech appears here…") ? transcriptShown : "";
 }
 
-function saveMemo() {
-  stopMemo();
+// Stop listening and give the recognizer a moment to deliver the last words.
+function stopMemoAndWait() {
+  const r = recognition;
+  if (!r) { stopMemo(); return Promise.resolve(); }
+  return new Promise((resolve) => {
+    let finished = false;
+    const done = () => { if (!finished) { finished = true; resolve(); } };
+    const prevEnd = r.onend;
+    r.onend = (ev) => { if (prevEnd) prevEnd(ev); done(); };
+    setTimeout(done, 1500);
+    stopMemo();
+  });
+}
+
+let savingMemo = false;
+async function saveMemo() {
+  if (savingMemo) return;          // ignore a second tap while the last words come in
+  savingMemo = true;
+  try { await stopMemoAndWait(); } finally { savingMemo = false; }
   const text = getMemoText();
   if (text) {
     state.memos.push({
