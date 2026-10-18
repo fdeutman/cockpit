@@ -376,6 +376,27 @@ let memoStartTime = 0;
 let memoTimer = null;
 let liveTranscript = "";
 
+// ============ SPEECH HELPERS ============
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+// Rebuild the text of one listening session from ALL its results (never append per event),
+// and drop a result that only repeats the one before it (another Android quirk).
+function speechFromResults(results) {
+  let final = "", interim = "", prev = "";
+  for (let i = 0; i < results.length; i++) {
+    const t = (results[i][0].transcript || "").trim();
+    if (!t) continue;
+    if (results[i].isFinal) {
+      if (prev && t.toLowerCase().startsWith(prev.toLowerCase())) final = final.slice(0, final.length - prev.length).trim();
+      final = joinSpeech(final, t);
+      prev = t;
+    } else {
+      interim = joinSpeech(interim, t);
+    }
+  }
+  return { final, interim };
+}
+function joinSpeech(a, b) { a = (a || "").trim(); b = (b || "").trim(); return a && b ? a + " " + b : (a || b); }
+
 // ============ RENDER ============
 function $(id) { return document.getElementById(id); }
 
@@ -727,25 +748,18 @@ function startMemo() {
 
   recognition = new SR();
   recognition.lang = "nl-NL";
-  recognition.continuous = true;
+  // Android Chrome repeats earlier words in continuous mode ("Dit Dit is Dit is een ...").
+  // There we listen one sentence at a time and restart; elsewhere continuous is fine.
+  recognition.continuous = !IS_ANDROID;
   recognition.interimResults = true;
 
-  let sessionFinalText = "";
+  let committedText = "";    // text from earlier listening sessions (after restarts)
+  let sessionFinalText = ""; // final text of the current session, rebuilt on every event
   recognition.onresult = (e) => {
-    let interim = "";
-    let newFinal = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        newFinal += e.results[i][0].transcript + " ";
-      } else {
-        interim += e.results[i][0].transcript;
-      }
-    }
-    if (newFinal) {
-      sessionFinalText += newFinal;
-      liveTranscript = sessionFinalText;
-    }
-    const display = sessionFinalText + (interim ? " " + interim : "");
+    const r = speechFromResults(e.results);
+    sessionFinalText = r.final;
+    liveTranscript = joinSpeech(committedText, sessionFinalText);
+    const display = joinSpeech(liveTranscript, r.interim);
     if (display.trim()) {
       $("transcript").textContent = display;
       $("transcript").classList.remove("empty");
@@ -765,8 +779,10 @@ function startMemo() {
   };
 
   recognition.onend = () => {
-    // Save accumulated text before potential restart
-    liveTranscript = sessionFinalText;
+    // Keep what this session heard before a possible restart
+    committedText = joinSpeech(committedText, sessionFinalText);
+    sessionFinalText = "";
+    liveTranscript = committedText;
     // Restart if still recording
     if ($("mic-btn") && !$("mic-btn").classList.contains("idle")) {
       try { recognition.start(); } catch {}
@@ -1218,24 +1234,22 @@ $("build-mic").onclick = () => {
   }
   buildRecognition = new SR();
   buildRecognition.lang = "nl-NL";
-  buildRecognition.continuous = true;
+  buildRecognition.continuous = !IS_ANDROID;
   buildRecognition.interimResults = true;
-  const baseText = $("build-input").value ? $("build-input").value + " " : "";
+  let committed = $("build-input").value.trim();
   let sessionFinal = "";
   buildRecognition.onresult = (e) => {
-    let interim = "", newFinal = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) newFinal += e.results[i][0].transcript + " ";
-      else interim += e.results[i][0].transcript;
-    }
-    if (newFinal) sessionFinal += newFinal;
-    $("build-input").value = baseText + sessionFinal + interim;
+    const r = speechFromResults(e.results);
+    sessionFinal = r.final;
+    $("build-input").value = joinSpeech(joinSpeech(committed, sessionFinal), r.interim);
   };
   buildRecognition.onerror = (ev) => {
     if (ev.error === "no-speech") { try { buildRecognition.start(); } catch {} }
     else { buildRecognition = null; $("build-mic").classList.remove("recording"); $("build-mic").classList.add("idle"); }
   };
   buildRecognition.onend = () => {
+    committed = joinSpeech(committed, sessionFinal);
+    sessionFinal = "";
     if (buildRecognition && $("build-mic").classList.contains("recording")) {
       try { buildRecognition.start(); } catch {}
     }
