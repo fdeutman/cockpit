@@ -172,8 +172,8 @@
   <div id="arrival" class="arrival hidden">
     <div class="arrival-card">
       <div class="arrival-icon">&#128233;</div>
-      <p class="arrival-title">List ready from your desktop</p>
-      <p class="arrival-text">Tap below to load it into your call run.</p>
+      <p class="arrival-title" id="arrival-title">Load your new list</p>
+      <p class="arrival-text" id="arrival-text">Tap below to load it into your call run.</p>
       <button class="btn-primary" id="btn-arrival-load" style="width:100%;">Load the list</button>
       <button class="btn-ghost" id="btn-arrival-cancel" style="width:100%;margin-top:8px;">Not now</button>
     </div>
@@ -1160,6 +1160,11 @@ $("btn-build-clip").onclick = () => importFromClipboard($("build-status"));
   if (params.get("paste") !== "1") return;
   history.replaceState(null, "", window.location.pathname);
   const overlay = $("arrival");
+  // Say what the new list will replace, so you can tell whether you still need to load it
+  if (CONTACTS.length) {
+    const current = LIST_META.source || "your current list";
+    $("arrival-text").textContent = "This replaces " + current + " (" + CONTACTS.length + (CONTACTS.length === 1 ? " contact" : " contacts") + ").";
+  }
   overlay.classList.remove("hidden");
   $("btn-arrival-load").onclick = async () => {
     try {
@@ -1332,8 +1337,19 @@ document.querySelectorAll(".quick-btn").forEach(btn => {
 
 // When the app becomes visible again (e.g., user returns from dialer),
 // check if there's a pending memo to show
+// Several copies of the app can be open (each Send opens a new tab).
+// Always show the list that was loaded last, in every copy.
+function reloadFromStorage() {
+  state = loadState();
+  CONTACTS = state.contacts || [];
+  LIST_META = { date: state.listDate, source: state.listSource };
+  renderList();
+}
+window.addEventListener("storage", (e) => { if (e.key === LS_KEY) reloadFromStorage(); });
+
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
+    reloadFromStorage();
     checkPendingMemo();
     // Clear the "return to app" notification from the build flow
     if (swRegistration) {
